@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anywhere is Possible — Korean Air</title>
+<style>
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#071c34;color:#fff;font-family:"Noto Sans KR","Malgun Gothic",sans-serif}body{display:grid;place-items:center}.frame{position:relative;width:min(100vw,177.7778vh);aspect-ratio:16/9;background:#092344;overflow:hidden}canvas{display:block;width:100%;height:100%}#go{position:absolute;inset:0;display:grid;place-items:center;border:0;background:rgba(3,16,32,.72);color:white;font:600 24px "Noto Sans KR","Malgun Gothic",sans-serif;letter-spacing:.12em;cursor:pointer}#go span{padding:20px 32px;border:1px solid #91d8ef;background:rgba(4,28,51,.55)}#go.hide{display:none}
+</style><body><main class="frame"><canvas id="c" width="1920" height="1080"></canvas><button id="go"><span>여정을 시작하다　▶</span></button></main>
+<script>
+(()=>{
+const c=document.querySelector('#c'),x=c.getContext('2d'),W=1920,H=1080,D=30,BPM=120,beat=.5;let rec,parts=[],start=0,raf=0,playing=false;
+const scenes=[
+ {from:0,to:4.4,kicker:'KOREAN AIR  ·  YOUR NEXT STORY',lines:['지금,','떠나고 싶은 곳이 있나요?'],accent:1,sub:'그곳을 떠올리는 순간, 여정은 시작됩니다'},
+ {from:4.4,to:8.7,kicker:'A NEW MORNING',lines:['바다가 부르는','아침'],accent:1,sub:'오늘의 풍경은 어제와 다르게'},
+ {from:8.7,to:13,kicker:'A NEW CITY',lines:['낯선 도시의','첫 페이지'],accent:0,sub:'처음 만나는 거리, 처음 만나는 나'},
+ {from:13,to:17.4,kicker:'FIND YOUR ANYWHERE',lines:['마음이 먼저','도착하는 곳'],accent:1,sub:'작은 설렘이 커다란 이야기가 되도록'},
+ {from:17.4,to:21.7,kicker:'YOUR JOURNEY, YOUR WAY',lines:['당신의 어디든,','가능성이 됩니다'],accent:0,sub:'기대보다 더 멀리 펼쳐질 내일'},
+ {from:21.7,to:25.7,kicker:'LET THE WORLD OPEN UP',lines:['떠나는 순간부터','새로운 내가 시작돼'],accent:1,sub:'당신의 다음 장면을 향해'},
+ {from:25.7,to:30,kicker:'KOREAN AIR',lines:['Anywhere','is Possible'],accent:0,sub:'대한항공  ·  당신의 다음 여정과 함께'}
+];
+const E=v=>{v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)},OUT=v=>{v=Math.max(0,Math.min(1,v));return 1-Math.pow(1-v,3)};
+function roundRect(cx,cy,w,h,r,fill,stroke){x.beginPath();x.roundRect(cx,cy,w,h,r);if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.stroke()}}
+function draw(t){let scene=scenes.find(s=>t>=s.from&&t<s.to)||scenes[scenes.length-1],local=t-scene.from,dur=scene.to-scene.from,prog=local/dur;
+// Premium deep-blue field and shifting light, derived from current Korean Air brand palette.
+let bg=x.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#071a32');bg.addColorStop(.52,'#0b3154');bg.addColorStop(1,'#071d38');x.fillStyle=bg;x.fillRect(0,0,W,H);
+let glow=x.createRadialGradient(1450+90*Math.sin(t*.28),180,30,1450,180,920);glow.addColorStop(0,'rgba(93,198,229,.24)');glow.addColorStop(1,'rgba(50,133,186,0)');x.fillStyle=glow;x.fillRect(0,0,W,H);
+// Soft cloud bands drifting behind the words.
+for(let i=0;i<5;i++){let yy=175+i*196+32*Math.sin(t*.33+i), xx=((i*521-t*(35+i*7))%(W+600)+W+600)%(W+600)-280;x.globalAlpha=.055+(i%2)*.018;x.fillStyle=i%2?'#a8e2f2':'#ffffff';x.beginPath();x.ellipse(xx,yy,190+i%3*55,32+i%2*14,-.035,0,Math.PI*2);x.fill();x.beginPath();x.ellipse(xx+95,yy-14,135,40,-.035,0,Math.PI*2);x.fill()}x.globalAlpha=1;
+// Thin orbit arcs: a visual metaphor for routes connecting places.
+x.save();x.translate(1470,555);x.rotate(-.13);x.strokeStyle='rgba(145,216,239,.17)';x.lineWidth=2;x.beginPath();x.ellipse(0,0,615,282,0,Math.PI*1.04,Math.PI*1.93);x.stroke();x.setLineDash([5,15]);x.strokeStyle='rgba(216,240,250,.25)';x.beginPath();x.ellipse(0,0,555,227,0,Math.PI*1.02,Math.PI*1.96);x.stroke();x.restore();x.setLineDash([]);
+// Flight path moves with beat, ending in a bright Korean-red waypoint.
+let routeP=(t*.13)%1,rx=250+routeP*1370,ry=715-205*Math.sin(routeP*Math.PI);x.save();x.strokeStyle='rgba(129,209,231,.5)';x.lineWidth=2.5;x.setLineDash([3,13]);x.beginPath();x.moveTo(235,760);x.bezierCurveTo(610,480,1000,1040,1660,390);x.stroke();x.setLineDash([]);x.globalAlpha=.2+.16*Math.sin(t*4*Math.PI);x.fillStyle='#ed5757';x.beginPath();x.arc(rx,ry,10+6*(.5+.5*Math.sin(t*4*Math.PI)),0,Math.PI*2);x.fill();x.globalAlpha=1;x.fillStyle='#f15b61';x.shadowColor='#f15b61';x.shadowBlur=25;x.beginPath();x.arc(rx,ry,7,0,Math.PI*2);x.fill();x.shadowBlur=0;x.restore();
+// A minimal, abstract jet silhouette glides along the route.
+let px=290+(t*82)%(W+240)-120,py=747-205*Math.sin(((px-235)/1425)*Math.PI);x.save();x.translate(px,py);x.rotate(-.22);x.fillStyle='rgba(226,247,252,.8)';x.beginPath();x.moveTo(35,0);x.lineTo(-11,-6);x.lineTo(-28,-24);x.lineTo(-34,-24);x.lineTo(-28,-5);x.lineTo(-47,-2);x.lineTo(-58,-11);x.lineTo(-63,-10);x.lineTo(-57,0);x.lineTo(-63,10);x.lineTo(-58,11);x.lineTo(-47,2);x.lineTo(-28,5);x.lineTo(-34,24);x.lineTo(-28,24);x.lineTo(-11,6);x.closePath();x.fill();x.restore();
+// Beat detection is deterministic and matches 120 BPM soundtrack.
+let phase=((t+.0)%beat)/beat,pulse=Math.pow(1-phase,5),nearBeat=Math.exp(-Math.pow((((t%beat)+beat)%beat)/.11,2));let accentBeat=Math.exp(-Math.pow((((t%2)+2)%2)/.15,2));
+// Background giant kinetic word with gentle beat-driven scaling.
+x.save();x.globalAlpha=.055;x.textAlign='right';x.textBaseline='middle';x.font='800 270px "Noto Sans KR","Malgun Gothic",sans-serif';x.fillStyle='#bdeafa';x.fillText(t<25.7?'ANYWHERE':'POSSIBLE',W-92,254);x.restore();
+// Top metadata bar
+x.fillStyle='rgba(194,232,243,.72)';x.font='600 17px "Noto Sans KR","Malgun Gothic",sans-serif';x.textAlign='left';x.fillText('KOREAN AIR',104,78);x.fillStyle='rgba(194,232,243,.42)';x.fillRect(249,69,65,2);x.fillStyle='rgba(194,232,243,.66)';x.font='500 15px "Noto Sans KR","Malgun Gothic",sans-serif';x.fillText('ANYWHERE IS POSSIBLE',334,78);
+let enter=OUT(local/.45),leave=E((dur-local)/.36),alpha=enter*leave,beatScale=1+.038*nearBeat+.016*accentBeat;
+// Accent word / headline: scale and glow respond to each musical beat.
+x.save();x.globalAlpha=alpha;x.textAlign='left';x.textBaseline='middle';x.translate(170+((1-enter)*-75),0);x.scale(beatScale,beatScale);x.shadowColor='#62c9e7';x.shadowBlur=12*nearBeat;
+let y0=420,fs=scene.lines.length===1?132:(scene.lines[0].length>9?84:105);
+scene.lines.forEach((line,i)=>{let yy=y0+i*133;let isAccent=i===scene.accent;x.font=`${isAccent?800:650} ${fs}px "Noto Sans KR","Malgun Gothic",sans-serif`;x.fillStyle=isAccent?'#a7e7f6':'#f6fbfc';let showChars=[...line];let reveal=Math.min(showChars.length,Math.max(0,Math.floor((local-.09)*22)));let shown=showChars.slice(0,reveal).join('');x.fillText(shown,0,yy);if(isAccent&&reveal>0){let tw=x.measureText(shown).width; x.fillStyle='#ef5b62';x.fillRect(tw+16,yy+fs*.33,Math.min(62,20+24*accentBeat),7)}});
+x.shadowBlur=0;x.globalAlpha=alpha*.78;x.font='500 25px "Noto Sans KR","Malgun Gothic",sans-serif';x.fillStyle='#d6eaf1';x.fillText(scene.sub,4,760);x.restore();
+// Audio-synced underline, bounces on quarter beats.
+let bar=E(Math.min(1,prog*3));x.save();x.globalAlpha=.82;x.fillStyle='#62c9e7';x.fillRect(170,842,460*bar,3);x.fillStyle='#ef5b62';x.beginPath();x.arc(170+460*bar,843,5+5*nearBeat,0,Math.PI*2);x.fill();x.restore();
+// final campaign signature card, held clearly for end frame
+if(t>25.7){let p=E((t-25.7)/.65),a=p; x.save();x.globalAlpha=a;roundRect(1330,618,480,225,20,'rgba(8,27,48,.72)','rgba(145,216,239,.46)');x.fillStyle='#eefaff';x.font='600 24px "Noto Sans KR","Malgun Gothic",sans-serif';x.textAlign='left';x.fillText('대한항공',1374,675);x.fillStyle='#8bd9ed';x.font='800 30px Arial,sans-serif';x.fillText('KOREAN AIR',1374,735);x.fillStyle='rgba(229,246,251,.68)';x.font='500 17px "Noto Sans KR","Malgun Gothic",sans-serif';x.fillText('당신의 다음 여정을 향해',1374,788);x.restore()}
+// Beat bar and restrained frame
+x.fillStyle='rgba(206,235,242,.3)';x.fillRect(104,1001,W-208,2);x.fillStyle='#7fd6ed';x.fillRect(104,1001,(W-208)*(t/D),2);x.fillStyle='rgba(206,235,242,.58)';x.font='500 15px Arial,sans-serif';x.textAlign='right';x.fillText('0'+Math.floor(t/60)+':'+String(Math.floor(t)%60).padStart(2,'0')+' / 00:30',W-106,976);
+}
+function frame(){if(!playing)return;let t=Math.min(D,(performance.now()-start)/1000);draw(t);if(t>=D){finish();return}raf=requestAnimationFrame(frame)}
+// Original upbeat instrumental: bright pluck motif, bouncing bass, soft kick and claps at 120 BPM.
+function music(){let ac=new AudioContext(),out=ac.createGain(),comp=ac.createDynamicsCompressor(),dest=ac.createMediaStreamDestination();out.gain.value=.72;out.connect(comp);comp.connect(ac.destination);comp.connect(dest);let zero=ac.currentTime+.2;
+function tone(tm,f,dur,vol,wave='triangle',filter=3000){let o=ac.createOscillator(),g=ac.createGain(),lp=ac.createBiquadFilter();o.type=wave;o.frequency.setValueAtTime(f,tm);lp.type='lowpass';lp.frequency.value=filter;g.gain.setValueAtTime(.0001,tm);g.gain.exponentialRampToValueAtTime(vol,tm+.012);g.gain.exponentialRampToValueAtTime(.0001,tm+dur);o.connect(lp);lp.connect(g);g.connect(out);o.start(tm);o.stop(tm+dur+.02)}
+function noise(tm,dur,vol,cut){let n=Math.floor(ac.sampleRate*dur),b=ac.createBuffer(1,n,ac.sampleRate),a=b.getChannelData(0);for(let i=0;i<n;i++)a[i]=Math.random()*2-1;let s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();s.buffer=b;f.type='highpass';f.frequency.value=cut;g.gain.setValueAtTime(vol,tm);g.gain.exponentialRampToValueAtTime(.0001,tm+dur);s.connect(f);f.connect(g);g.connect(out);s.start(tm)}
+let scale=[261.63,293.66,329.63,392,440,523.25,587.33,659.25],chords=[[130.81,164.81,196],[110,146.83,164.81],[87.31,130.81,174.61],[98,146.83,196],[130.81,164.81,196],[110,146.83,164.81]];
+for(let bar=0;bar<15;bar++){let base=zero+bar*2;for(let q=0;q<4;q++){let tm=base+q*.5,idx=(bar*3+q*2)%scale.length;let f=scale[idx];tone(tm,f,.24,.075,'triangle',2600);tone(tm+.008,f*2,.13,.018,'sine',5000);if(q%2===0)tone(tm,chords[bar%chords.length][q%3],.38,.042,'sine',800);if(q===0||q===2){tone(tm,55,.16,.16,'sine',150);let kick=ac.createOscillator(),kg=ac.createGain();kick.type='sine';kick.frequency.setValueAtTime(125,tm);kick.frequency.exponentialRampToValueAtTime(43,tm+.13);kg.gain.setValueAtTime(.18,tm);kg.gain.exponentialRampToValueAtTime(.0001,tm+.17);kick.connect(kg);kg.connect(out);kick.start(tm);kick.stop(tm+.18)}else noise(tm,.095,.025,4500);if(q===1||q===3)noise(tm,.045,.012,7000)}
+// bass groove eighth notes
+for(let e=0;e<8;e++){let tm=base+e*.25,bass=chords[bar%chords.length][0]/2;tone(tm,bass,.18,e%2===0?.095:.06,'sawtooth',420)}
+}
+// short closing shimmer
+for(let i=0;i<5;i++)tone(zero+29+i*.19,scale[[0,2,4,5,7][i]]*2,.65,.035,'sine',6000);
+return{ac,dest,zero}}
+function finish(){if(!playing)return;playing=false;cancelAnimationFrame(raf);try{rec.stop()}catch(e){}}
+document.querySelector('#go').addEventListener('click',async()=>{document.querySelector('#go').classList.add('hide');let stream=c.captureStream(30),m=music();m.dest.stream.getAudioTracks().forEach(z=>stream.addTrack(z));await m.ac.resume();let mime='video/mp4;codecs=avc1.42E01E,mp4a.40.2';if(!MediaRecorder.isTypeSupported(mime))mime='video/mp4';rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:10000000,audioBitsPerSecond:192000});rec.ondataavailable=e=>{if(e.data.size)parts.push(e.data)};rec.onstop=()=>{let blob=new Blob(parts,{type:'video/mp4'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='대한항공_Anywhere_is_Possible_30초_16x9.mp4';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);};rec.start(1000);start=performance.now();playing=true;raf=requestAnimationFrame(frame);setTimeout(()=>{if(playing){draw(D);finish()}},30200)});
+draw(0);
+})();
+</script></body></html>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>11월, 천천히 물드는 마음</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101820;color:#f5ead7;font-family:"Noto Sans KR","Malgun Gothic",sans-serif}
+body{display:grid;place-items:center}.shell{height:100vh;aspect-ratio:9/16;max-width:100vw;position:relative;overflow:hidden;background:#17232a}
+canvas{width:100%;height:100%;display:block}.chrome{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:9% 8%;color:#e6d9c1}
+.top{display:flex;align-items:center;justify-content:space-between;font-size:clamp(9px,1.7vw,16px);letter-spacing:.23em;font-weight:400;opacity:.85}.rule{width:36%;height:1px;background:#d7a36b;opacity:.65}
+.caption{font-family:"Noto Serif KR","Batang",serif;font-size:clamp(9px,1.55vw,14px);letter-spacing:.16em;line-height:2.1;color:#d5cbbb;opacity:.9}.bottom{display:flex;justify-content:space-between;align-items:end;font-size:clamp(8px,1.35vw,12px);letter-spacing:.22em;color:#c1b29b;opacity:.78}.dot{width:5px;height:5px;border-radius:50%;background:#ca8756;box-shadow:0 0 15px #f1ae69}
+#start{position:absolute;inset:0;background:rgba(13,20,24,.7);border:0;color:#f5ead7;font:inherit;letter-spacing:.16em;cursor:pointer;display:grid;place-items:center}#start span{padding:16px 24px;border:1px solid rgba(224,186,135,.65);background:rgba(25,32,35,.45);backdrop-filter:blur(4px)}#start.hidden{display:none}
+</style></head><body><main class="shell"><canvas id="c" width="1080" height="1920"></canvas><div class="chrome"><header class="top"><span>11월의 기록</span><span class="rule"></span><span>늦가을</span></header><div class="caption">바람이 차가워질수록<br>마음은 조금 더 선명해진다</div><footer class="bottom"><span>NOVEMBER · 2026</span><span class="dot"></span><span>천천히, 물들다</span></footer></div><button id="start"><span>가을을 재생하다　▷</span></button></main>
+<script>
+(()=>{const canvas=document.querySelector('#c'),ctx=canvas.getContext('2d'),W=1080,H=1920,duration=10;let audioCtx=null,recorder=null,chunks=[],raf=0,recording=false;
+const leaves=Array.from({length:36},(_,i)=>({x:(i*317%1080),y:(i*491%1920),r:12+(i*17%30),phase:i*2.11,spd:.45+(i%7)*.11,rot:i*1.7,hue:[21,27,33,37][i%4],alpha:.2+(i%5)*.055}));
+function draw(t){let g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#18272e');g.addColorStop(.48,'#283239');g.addColorStop(1,'#171d21');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+// subdued late-autumn sunset glow
+let sunY=760+70*Math.sin(t*.32),sunX=785-46*Math.sin(t*.25);let halo=ctx.createRadialGradient(sunX,sunY,5,sunX,sunY,610);halo.addColorStop(0,'rgba(213,139,75,.26)');halo.addColorStop(.28,'rgba(186,109,66,.12)');halo.addColorStop(1,'rgba(186,109,66,0)');ctx.fillStyle=halo;ctx.fillRect(0,0,W,H);
+// distant hill silhouettes
+ctx.beginPath();ctx.moveTo(0,1260);for(let x=0;x<=W;x+=20)ctx.lineTo(x,1220+60*Math.sin(x*.006+t*.15)+35*Math.sin(x*.014));ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fillStyle='#202b2d';ctx.fill();
+// fine grain
+let seed=Math.floor(t*9);for(let i=0;i<180;i++){let x=(i*197+seed*23)%W,y=(i*313+seed*41)%H;ctx.fillStyle=`rgba(245,230,205,${.025+(i%3)*.009})`;ctx.fillRect(x,y,2,2)}
+// drifting leaves
+for(const l of leaves){let x=(l.x+Math.sin(t*l.spd+l.phase)*56+1080)%1080,y=(l.y+t*(18+l.spd*12))%2040-60;ctx.save();ctx.translate(x,y);ctx.rotate(l.rot+t*.23*l.spd);ctx.globalAlpha=l.alpha;ctx.fillStyle=`hsl(${l.hue} 47% 60%)`;ctx.beginPath();ctx.moveTo(-l.r,0);ctx.quadraticCurveTo(-l.r*.15,-l.r*.75,l.r,0);ctx.quadraticCurveTo(l.r*.05,l.r*.68,-l.r,0);ctx.fill();ctx.strokeStyle='rgba(245,220,180,.52)';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(-l.r*.72,0);ctx.lineTo(l.r*.75,0);ctx.stroke();ctx.restore()}
+// gentle vertical light rays
+ctx.globalAlpha=.11;for(let i=0;i<6;i++){let x=80+i*195+Math.sin(t*.19+i)*25;let ray=ctx.createLinearGradient(x,380,x+85,1400);ray.addColorStop(0,'rgba(231,190,141,0)');ray.addColorStop(.5,'rgba(231,190,141,.25)');ray.addColorStop(1,'rgba(231,190,141,0)');ctx.fillStyle=ray;ctx.beginPath();ctx.moveTo(x,380);ctx.lineTo(x+70,380);ctx.lineTo(x+250,1400);ctx.lineTo(x+170,1400);ctx.fill()}ctx.globalAlpha=1;
+// typography: one quiet phrase, kinetic changes and pauses
+const ease=x=>{x=Math.max(0,Math.min(1,x));return 1-Math.pow(1-x,3)};function textLine(text,cy,size,progress,opts={}){let a=ease((progress-(opts.delay||0))/.55),exit=ease((progress-(opts.out||.92))/.08);ctx.save();ctx.globalAlpha=a*(1-exit);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`${opts.weight||500} ${size}px "Noto Serif KR","Batang",serif`;ctx.fillStyle=opts.color||'#f2e5d0';ctx.shadowColor='rgba(234,163,103,.24)';ctx.shadowBlur=18;let slide=(1-a)*42; if(opts.spaced){let chars=[...text],gap=opts.gap||3,total=chars.reduce((s,ch)=>s+ctx.measureText(ch).width,0)+gap*(chars.length-1),x=(W-total)/2;for(const ch of chars){ctx.fillText(ch,x+ctx.measureText(ch).width/2,cy+slide);x+=ctx.measureText(ch).width+gap}}else ctx.fillText(text,W/2,cy+slide);ctx.restore()}
+let beat=t/duration;
+if(t<2.2){textLine('11월',760,164,beat,{spaced:true,gap:10,delay:.05,out:.98});textLine('NOVEMBER',878,24,beat,{spaced:true,gap:6,delay:.22,out:.95,color:'#cda47a'})}
+else if(t<4.8){let p=(t-2.2)/2.6;textLine('찬 바람이',760,91,p,{delay:.02,out:.91});textLine('불어오면',875,91,p,{delay:.19,out:.93,color:'#e7cba6'})}
+else if(t<7.5){let p=(t-4.8)/2.7;textLine('흩어진 마음도',780,75,p,{delay:.02,out:.91});textLine('천천히 물든다',890,75,p,{delay:.18,out:.94,color:'#e9b47e'})}
+else {let p=(t-7.5)/2.5;textLine('11월,',735,85,p,{delay:.02,out:1});textLine('조금 느려도 괜찮아',850,62,p,{delay:.16,out:1,color:'#e8c9a4'})}
+// fine editorial framing
+ctx.strokeStyle='rgba(222,185,139,.35)';ctx.lineWidth=1;ctx.strokeRect(57,66,W-114,H-132);
+}
+function frame(now){if(!recording)return;let t=Math.min(duration,(now-audioCtx._startTime)/1000);draw(t);if(t>=duration){stopRec();return}raf=requestAnimationFrame(frame)}
+function note(time,freq,dur,amp,type='sine'){let o=audioCtx.createOscillator(),gain=audioCtx.createGain();o.type=type;o.frequency.setValueAtTime(freq,time);gain.gain.setValueAtTime(.0001,time);gain.gain.exponentialRampToValueAtTime(amp,time+.07);gain.gain.exponentialRampToValueAtTime(.0001,time+dur);o.connect(gain);gain.connect(audioCtx.destination);o.start(time);o.stop(time+dur+.04)}
+function makeMusic(){audioCtx=new AudioContext();let master=audioCtx.createGain();master.gain.value=.7;master.connect(audioCtx.destination);let compressor=audioCtx.createDynamicsCompressor();compressor.threshold.value=-22;compressor.ratio.value=3;master.disconnect();master.connect(compressor);compressor.connect(audioCtx.destination);let dest=audioCtx.createMediaStreamDestination();compressor.connect(dest);
+// Soft original piano-like tones with warm sustained pads, tuned to a reflective D major / B minor palette.
+let chords=[[146.83,220,293.66,369.99],[123.47,185,246.94,293.66],[110,164.81,220,329.63],[130.81,196,261.63,329.63],[146.83,220,293.66,369.99]];let starts=audioCtx.currentTime+.16;
+chords.forEach((ch,ci)=>{let base=starts+ci*2.05;ch.forEach((f,j)=>{let o=audioCtx.createOscillator(),g=audioCtx.createGain(),lp=audioCtx.createBiquadFilter();o.type='triangle';o.frequency.value=f;lp.type='lowpass';lp.frequency.value=950;g.gain.setValueAtTime(.0001,base);g.gain.linearRampToValueAtTime(.018/(j+1),base+.5);g.gain.setValueAtTime(.018/(j+1),base+1.5);g.gain.linearRampToValueAtTime(.0001,base+2.2);o.connect(lp);lp.connect(g);g.connect(master);o.start(base);o.stop(base+2.25)});});
+let melody=[[0,587.33],[.75,493.88],[1.5,440],[2.25,369.99],[3.05,440],[3.85,493.88],[4.7,554.37],[5.5,493.88],[6.25,440],[7.05,369.99],[7.8,329.63],[8.65,369.99],[9.25,293.66]];for(const [off,f] of melody){let tm=starts+off;note(tm,f,1.15,.045,'sine');note(tm,f*2.003,.75,.012,'triangle')}
+// Very quiet filtered wind-like breath, fading in and out.
+let nframes=Math.floor(audioCtx.sampleRate*10.5),buffer=audioCtx.createBuffer(1,nframes,audioCtx.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<nframes;i++)data[i]=(Math.random()*2-1)*.035;let src=audioCtx.createBufferSource(),filter=audioCtx.createBiquadFilter(),windGain=audioCtx.createGain();src.buffer=buffer;filter.type='lowpass';filter.frequency.value=550;windGain.gain.setValueAtTime(.0001,starts);windGain.gain.linearRampToValueAtTime(.1,starts+2);windGain.gain.linearRampToValueAtTime(.045,starts+6);windGain.gain.linearRampToValueAtTime(.0001,starts+10);src.connect(filter);filter.connect(windGain);windGain.connect(master);src.start(starts);src.stop(starts+10.2);
+return dest;}
+function stopRec(){if(!recording)return;recording=false;cancelAnimationFrame(raf);try{recorder.stop()}catch(e){}}
+document.querySelector('#start').addEventListener('click',async()=>{let b=document.querySelector('#start');b.classList.add('hidden');let stream=canvas.captureStream(30);let music=makeMusic();music.stream.getAudioTracks().forEach(x=>stream.addTrack(x));recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp9,opus',videoBitsPerSecond:7000000,audioBitsPerSecond:160000});recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=()=>{let blob=new Blob(chunks,{type:'video/webm'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='11월_천천히_물드는_마음_9x16.webm';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);document.body.innerHTML='<div style="display:grid;place-items:center;height:100vh;color:#f5ead7;background:#17232a;font-family:sans-serif">렌더링 완료 — 이 창을 닫아도 됩니다.</div>';};await audioCtx.resume();audioCtx._startTime=performance.now();recording=true;recorder.start(1000);raf=requestAnimationFrame(frame);setTimeout(()=>{if(recording){draw(duration);stopRec()}},10150)});
+draw(0);
+})();
+</script></main></body></html>
